@@ -9,43 +9,41 @@ jobs:
   run-scraper:
     runs-on: ubuntu-latest
 
-    # Permisos necesarios para escribir código y publicar la web a la vez
     permissions:
       contents: write
       pages: write
       id-token: write
 
     steps:
-    - name: Descargar el código del repositorio
-      uses: actions/checkout@v4
+      - name: Descargar el código del repositorio
+        uses: actions/checkout@v4
 
-    - name: Configurar Node.js en el servidor
-      uses: actions/setup-node@v4
-      with:
-        node-version: 20
+      - name: Configurar Node.js en el servidor
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
 
-    - name: Instalar dependencias
-      run: npm install
+      - name: Instalar dependencias
+        run: npm install
 
-    - name: Ejecutar el Scraper
-      run: node scraper.js
+      - name: Ejecutar el Scraper
+        run: node scraper.js
 
-    - name: Guardar cambios en el repositorio
-      run: |
-        git config --local user.email "github-actions[bot]@users.noreply.github.com"
-        git config --local user.name "github-actions[bot]"
-        git add datos.json
-        git commit -m "Bot: Calendario WWE actualizado automáticamente" || echo "Sin cambios en la cartelera"
-        git push
+      - name: Guardar cambios en el repositorio
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add datos.json
+          git commit -m "Bot: Calendario WWE actualizado automáticamente" || echo "Sin cambios en la cartelera"
+          git push
 
-    # NUEVO: Empaqueta tu index.html junto al nuevo datos.json y lo lanza a internet
-    - name: Configurar Pages
-      uses: actions/configure-pages@v4
+      - name: Configurar Pages
+        uses: actions/configure-pages@v4
 
-    - name: Subir diseño de la web
-      uses: actions/upload-pages-artifact@v3
-      with:
-        path: '.'
+      - name: Subir diseño de la web
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
 
-    - name: Desplegar a GitHub Pages en vivo
-      uses: actions/deploy-pages@v4
+      - name: Desplegar a GitHub Pages en vivo
+        uses: actions/deploy-pages@v4
