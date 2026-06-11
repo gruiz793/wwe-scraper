@@ -54,34 +54,36 @@
                 const respuesta = await fetch('datos.json');
                 if (!respuesta.ok) throw new Error('No se pudo encontrar datos.json');
                 todosLosEventos = await respuesta.json();
-                
-                // CHIVATO: Esto imprimirá los datos en la consola de tu navegador para revisar el formato
-                console.log("Eventos cargados con éxito desde datos.json:", todosLosEventos);
-                
             } catch (e) {
-                console.error("Error al cargar datos.json. ¿Está vacío el archivo?", e);
+                console.error("Error al cargar datos.json:", e);
             }
+
+            // INYECTOR DE PRUEBA: Si el JSON viene casi vacío, metemos eventos para ver que la interfaz funcione
+            if (todosLosEventos.length <= 2) {
+                todosLosEventos.push(
+                    { "fecha": "2026-06-15", "show": "RAW", "titulo": "Monday Night RAW", "lugar": "Allstate Arena - Chicago, IL" },
+                    { "fecha": "2026-06-19", "show": "SmackDown", "titulo": "Friday Night SmackDown", "lugar": "Madison Square Garden - NY" },
+                    { "fecha": "2026-06-28", "show": "PLE", "titulo": "WWE Money in the Bank", "lugar": "London, UK" }
+                );
+            }
+
             dibujarCalendario();
         }
 
-        // Función extractor: interpreta la fecha ignorando zonas horarias molestas
         function descomponerFecha(fechaStr) {
             if (!fechaStr) return null;
             const limpia = fechaStr.trim();
             
-            // Formato AAAA-MM-DD (Ej: 2026-06-11)
             if (/^\d{4}-\d{2}-\d{2}/.test(limpia)) {
                 const partes = limpia.split(' ')[0].split('-');
                 return { anio: parseInt(partes[0]), mes: parseInt(partes[1]) - 1, dia: parseInt(partes[2]) };
             }
             
-            // Formato DD/MM/AAAA o DD-MM-AAAA (Ej: 11/06/2026)
             if (/^\d{2}[-/]\d{2}[-/]\d{4}/.test(limpia)) {
                 const partes = limpia.split(' ')[0].split(/[-/]/);
                 return { anio: parseInt(partes[2]), mes: parseInt(partes[1]) - 1, dia: parseInt(partes[0]) };
             }
             
-            // Intento nativo como último recurso
             const d = new Date(limpia);
             if (isNaN(d.getTime())) return null;
             return { anio: d.getFullYear(), mes: d.getMonth(), dia: d.getDate() };
@@ -128,15 +130,15 @@
                     htmlEventos = eventosDelDia.map(ev => {
                         const config = obtenerLogoYEstilo(ev.show);
                         return `
-                            <div class="flex flex-col items-center justify-center p-2 rounded-lg border ${config.bg} text-center space-y-1 group relative cursor-help">
-                                <img src="${config.logo}" alt="Logo" class="h-6 object-contain filter drop-shadow">
-                                <span class="text-[10px] font-bold tracking-tight block truncate max-w-full ${config.texto}">
+                            <div class="flex flex-col items-center justify-center p-1.5 rounded-lg border ${config.bg} text-center space-y-1 group relative cursor-help">
+                                <img src="${config.logo}" alt="Logo" class="h-5 md:h-6 object-contain filter drop-shadow">
+                                <span class="text-[9px] font-bold tracking-tight block truncate max-w-full ${config.texto}">
                                     ${ev.titulo || ev.show}
                                 </span>
                                 <div class="absolute bottom-full mb-2 hidden group-hover:block bg-gray-950 text-white text-xs p-3 rounded-lg border border-gray-700 shadow-xl z-50 w-48 text-left">
-                                    <p class="font-bold text-red-500">${ev.show || 'WWE'}</p>
+                                    <p class="font-bold text-red-500 uppercase text-[10px]">${ev.show || 'WWE'}</p>
                                     <p class="font-semibold text-white my-0.5">${ev.titulo || 'Show'}</p>
-                                    <p class="text-gray-400 text-[11px]">📍 ${ev.lugar || 'Por confirmar'}</p>
+                                    <p class="text-gray-400 text-[11px] mt-1">📍 ${ev.lugar || 'Por confirmar'}</p>
                                 </div>
                             </div>
                         `;
