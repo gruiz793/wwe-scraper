@@ -9,7 +9,6 @@ jobs:
   run-scraper:
     runs-on: ubuntu-latest
 
-    # Le damos permiso al bot para modificar archivos en nuestro repositorio
     permissions:
       contents: write
 
@@ -28,8 +27,6 @@ jobs:
     - name: Ejecutar el Scraper
       run: node scraper.js
 
-    # NUEVO: El bot guarda el archivo datos.json recién creado y lo sube a la web
-     calmados: si no hay cambios, no hace nada
     - name: Guardar cambios en el repositorio
       run: |
         git config --local user.email "github-actions[bot]@users.noreply.github.com"
