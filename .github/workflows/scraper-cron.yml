@@ -9,8 +9,11 @@ jobs:
   run-scraper:
     runs-on: ubuntu-latest
 
+    # Permisos necesarios para escribir código y publicar la web a la vez
     permissions:
       contents: write
+      pages: write
+      id-token: write
 
     steps:
     - name: Descargar el código del repositorio
@@ -34,3 +37,15 @@ jobs:
         git add datos.json
         git commit -m "Bot: Calendario WWE actualizado automáticamente" || echo "Sin cambios en la cartelera"
         git push
+
+    # NUEVO: Empaqueta tu index.html junto al nuevo datos.json y lo lanza a internet
+    - name: Configurar Pages
+      uses: actions/configure-pages@v4
+
+    - name: Subir diseño de la web
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: '.'
+
+    - name: Desplegar a GitHub Pages en vivo
+      uses: actions/deploy-pages@v4
