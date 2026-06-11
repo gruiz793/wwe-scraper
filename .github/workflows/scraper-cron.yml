@@ -2,13 +2,16 @@ name: WWE Scraper Automatizado
 
 on:
   schedule:
-    # Se ejecuta de forma remota cada 6 horas automáticamente
     - cron: '0 */6 * * *'
-  workflow_dispatch: # Permite que tú le des al botón de "Ejecutar ya" desde la web de GitHub
+  workflow_dispatch: 
 
 jobs:
   run-scraper:
-    runs-on: ubuntu-latest # Levanta una máquina virtual Linux remota
+    runs-on: ubuntu-latest
+
+    # Le damos permiso al bot para modificar archivos en nuestro repositorio
+    permissions:
+      contents: write
 
     steps:
     - name: Descargar el código del repositorio
@@ -24,3 +27,13 @@ jobs:
 
     - name: Ejecutar el Scraper
       run: node scraper.js
+
+    # NUEVO: El bot guarda el archivo datos.json recién creado y lo sube a la web
+     calmados: si no hay cambios, no hace nada
+    - name: Guardar cambios en el repositorio
+      run: |
+        git config --local user.email "github-actions[bot]@users.noreply.github.com"
+        git config --local user.name "github-actions[bot]"
+        git add datos.json
+        git commit -m "Bot: Calendario WWE actualizado automáticamente [skip ci]" || echo "Sin cambios en la cartelera"
+        git push
