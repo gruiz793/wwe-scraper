@@ -38,8 +38,7 @@ async function scrapeWWE() {
       const fechaObjetoET = DateTime.fromFormat(fechaEEUU, "yyyy-MM-dd HH:mm", { zone: "America/New_York" });
       
       // 2. La convertimos a UTC para guardarla de forma limpia y estándar
-      const fechaUTC = fechaObjetoET.toUTC().toISOString();
-
+      const fechaUTC = fechaObjetoET.toUTC().toISO();
       // 3. (Opcional para este log) Ver cómo se vería en España
       const fechaEspaña = fechaObjetoET.setZone("Europe/Madrid").toFormat("dd/MM/yyyy 'a las' HH:mm 'hora peninsular'");
 
