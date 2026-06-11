@@ -37,7 +37,6 @@
     </div>
 
     <script>
-        // URLs estables de los logos oficiales
         const LOGOS_MARCAS = {
             raw: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/WWE_Raw_logo_%22New_Era%22.png/120px-WWE_Raw_logo_%22New_Era%22.png',
             smackdown: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c4/WWE_SmackDown_logo_2024.png/120px-WWE_SmackDown_logo_2024.png',
@@ -53,12 +52,39 @@
         async function inicializar() {
             try {
                 const respuesta = await fetch('datos.json');
-                if (!respuesta.ok) throw new Error('No se pudo leer datos.json');
+                if (!respuesta.ok) throw new Error('No se pudo encontrar datos.json');
                 todosLosEventos = await respuesta.json();
+                
+                // CHIVATO: Esto imprimirá los datos en la consola de tu navegador para revisar el formato
+                console.log("Eventos cargados con éxito desde datos.json:", todosLosEventos);
+                
             } catch (e) {
-                console.error("Aviso: datos.json vacio o no creado aun:", e);
+                console.error("Error al cargar datos.json. ¿Está vacío el archivo?", e);
             }
             dibujarCalendario();
+        }
+
+        // Función extractor: interpreta la fecha ignorando zonas horarias molestas
+        function descomponerFecha(fechaStr) {
+            if (!fechaStr) return null;
+            const limpia = fechaStr.trim();
+            
+            // Formato AAAA-MM-DD (Ej: 2026-06-11)
+            if (/^\d{4}-\d{2}-\d{2}/.test(limpia)) {
+                const partes = limpia.split(' ')[0].split('-');
+                return { anio: parseInt(partes[0]), mes: parseInt(partes[1]) - 1, dia: parseInt(partes[2]) };
+            }
+            
+            // Formato DD/MM/AAAA o DD-MM-AAAA (Ej: 11/06/2026)
+            if (/^\d{2}[-/]\d{2}[-/]\d{4}/.test(limpia)) {
+                const partes = limpia.split(' ')[0].split(/[-/]/);
+                return { anio: parseInt(partes[2]), mes: parseInt(partes[1]) - 1, dia: parseInt(partes[0]) };
+            }
+            
+            // Intento nativo como último recurso
+            const d = new Date(limpia);
+            if (isNaN(d.getTime())) return null;
+            return { anio: d.getFullYear(), mes: d.getMonth(), dia: d.getDate() };
         }
 
         function obtenerLogoYEstilo(showName) {
@@ -86,17 +112,15 @@
             let diaSemanaInicio = primerDiaMes.getDay() - 1;
             if (diaSemanaInicio === -1) diaSemanaInicio = 6; 
 
-            // 1. Espacios en blanco del mes anterior
             for (let i = 0; i < diaSemanaInicio; i++) {
                 grid.innerHTML += `<div class="bg-gray-950/40 p-2 border-gray-800/40"></div>`;
             }
 
-            // 2. Dibujar los dias del mes actual
             for (let dia = 1; dia <= totalDias; dia++) {
                 const eventosDelDia = todosLosEventos.filter(evento => {
-                    if (!evento.fecha) return false;
-                    const evDate = new Date(evento.fecha);
-                    return evDate.getFullYear() === anio && evDate.getMonth() === mes && evDate.getDate() === dia;
+                    const infoFecha = descomponerFecha(evento.fecha);
+                    if (!infoFecha) return false;
+                    return infoFecha.anio === anio && infoFecha.mes === mes && infoFecha.dia === dia;
                 });
 
                 let htmlEventos = '';
@@ -113,7 +137,6 @@
                                     <p class="font-bold text-red-500">${ev.show || 'WWE'}</p>
                                     <p class="font-semibold text-white my-0.5">${ev.titulo || 'Show'}</p>
                                     <p class="text-gray-400 text-[11px]">📍 ${ev.lugar || 'Por confirmar'}</p>
-                                    ${ev.combates ? `<p class="text-gray-500 text-[10px] mt-1 border-t border-gray-800 pt-1"><b>Cartelera:</b> ${ev.combates}</p>` : ''}
                                 </div>
                             </div>
                         `;
