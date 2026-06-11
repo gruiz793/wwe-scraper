@@ -9,118 +9,56 @@
         body { background-color: #0b0f19; color: #f3f4f6; }
     </style>
 </head>
-<body class="p-6 max-w-5xl mx-auto">
+<body class="p-4 md:p-6 max-w-6xl mx-auto">
 
-    <header class="text-center mb-10">
-        <h1 class="text-4xl font-extrabold text-red-600 tracking-wider uppercase mb-2">WWE Live Calendar</h1>
-        <p class="text-gray-400">Actualizado automáticamente por GitHub Actions</p>
+    <header class="text-center mb-6">
+        <h1 class="text-4xl font-extrabold text-red-600 tracking-wider uppercase mb-1">WWE Live Calendar</h1>
+        <p class="text-gray-400 text-sm">Calendario mensual interactivo con actualización automática</p>
     </header>
 
-    <div class="flex justify-center gap-4 mb-8" id="filtros">
-        <button id="btn-todos" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded font-bold transition cursor-pointer">Todos</button>
-        <button id="btn-raw" class="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded font-bold transition cursor-pointer">RAW</button>
-        <button id="btn-smackdown" class="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded font-bold transition cursor-pointer">SmackDown</button>
-        <button id="btn-ple" class="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded font-bold transition cursor-pointer">PLEs</button>
+    <div class="flex justify-between items-center bg-gray-900 p-4 rounded-xl mb-6 border border-gray-800">
+        <button id="btn-prev" class="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-bold transition cursor-pointer">← Anterior</button>
+        <h2 id="mes-año-titulo" class="text-xl md:text-2xl font-black text-white uppercase tracking-wide">Mes Año</h2>
+        <button id="btn-next" class="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-bold transition cursor-pointer">Siguiente →</button>
     </div>
 
-    <div id="eventos-container" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <p class="text-center text-gray-500 col-span-full py-10">Cargando próximos eventos...</p>
+    <div class="flex flex-wrap justify-center gap-4 mb-6 text-xs font-semibold">
+        <div class="flex items-center gap-2 bg-gray-900 px-3 py-1.5 rounded-full border border-red-600/30"><span class="w-3 h-3 rounded-full bg-red-600"></span> RAW</div>
+        <div class="flex items-center gap-2 bg-gray-900 px-3 py-1.5 rounded-full border border-blue-600/30"><span class="w-3 h-3 rounded-full bg-blue-600"></span> SmackDown</div>
+        <div class="flex items-center gap-2 bg-gray-900 px-3 py-1.5 rounded-full border border-yellow-500/30"><span class="w-3 h-3 rounded-full bg-yellow-500"></span> NXT</div>
+        <div class="flex items-center gap-2 bg-gray-900 px-3 py-1.5 rounded-full border border-purple-600/30"><span class="w-3 h-3 rounded-full bg-purple-600"></span> PLE / Especial</div>
+    </div>
+
+    <div class="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden shadow-2xl">
+        <div class="grid grid-cols-7 bg-gray-950 text-center py-3 border-b border-gray-800 font-bold text-gray-400 text-xs md:text-sm uppercase tracking-wider">
+            <div>Lun</div><div>Mar</div><div>Mié</div><div>Jue</div><div>Vie</div><div>Sáb</div><div>Dom</div>
+        </div>
+        <div id="calendar-grid" class="grid grid-cols-7 min-h-[500px] bg-gray-900/50 divide-x divide-y divide-gray-800"></div>
     </div>
 
     <script>
-        // Almacén global de eventos en memoria
+        // Diccionario de logos oficiales (URLs públicas y estables)
+        const LOGOS_MARCAS = {
+            raw: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/WWE_Raw_logo_%22New_Era%22.png/120px-WWE_Raw_logo_%22New_Era%22.png',
+            smackdown: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c4/WWE_SmackDown_logo_2024.png/120px-WWE_SmackDown_logo_2024.png',
+            nxt: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/WWE_NXT_logo_%282024%29.png/120px-WWE_NXT_logo_%282024%29.png',
+            ple: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/WWE_Logo.svg/120px-WWE_Logo.svg.png'
+        };
+
         let todosLosEventos = [];
+        let fechaActual = new Date(); // Mes en curso
 
-        async function cargarEventos() {
-            const container = document.getElementById('eventos-container');
+        const nombresMeses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+
+        async function inicializar() {
             try {
-                // Intentamos leer el archivo que genera el scraper
                 const respuesta = await fetch('datos.json');
-                if (!respuesta.ok) throw new Error('No se pudo encontrar o leer datos.json');
-                
+                if (!respuesta.ok) throw new Error('Falta datos.json');
                 todosLosEventos = await respuesta.json();
-                renderizarEventos(todosLosEventos);
-            } catch (error) {
-                console.error("Error al cargar el JSON:", error);
-                if (container) {
-                    container.innerHTML = `
-                        <div class="col-span-full text-center bg-gray-900 border border-red-500/30 p-6 rounded-xl">
-                            <p class="text-red-400 font-semibold mb-2">⚠️ Conexión establecida, pero falta la cartelera</p>
-                            <p class="text-gray-500 text-sm">El archivo 'datos.json' aún no se ha creado o está vacío. Ejecuta el Scraper en Actions para generarlo.</p>
-                        </div>
-                    `;
-                }
+            } catch (e) {
+                console.error("No se pudieron cargar los eventos en vivo:", e);
             }
+            dibujarCalendario();
         }
 
-        function renderizarEventos(eventos) {
-            const container = document.getElementById('eventos-container');
-            if (!container) return;
-            
-            if (!eventos || eventos.length === 0) {
-                container.innerHTML = '<p class="text-center text-gray-400 col-span-full py-10">No hay eventos programados en esta categoría.</p>';
-                return;
-            }
-
-            container.innerHTML = eventos.map(evento => {
-                const showName = (evento.show || '').toLowerCase();
-                const esRaw = showName.includes('raw');
-                const esSD = showName.includes('smackdown');
-                
-                // Asignación dinámica de colores según la marca
-                const colorBorde = esRaw ? 'border-red-600' : (esSD ? 'border-blue-600' : 'border-purple-600');
-                const badgeColor = esRaw ? 'bg-red-600/20 text-red-400' : (esSD ? 'bg-blue-600/20 text-blue-400' : 'bg-purple-600/20 text-purple-400');
-
-                return `
-                    <div class="bg-gray-900 border-l-4 ${colorBorde} p-5 rounded-r-xl shadow-lg hover:scale-[1.01] transition duration-200">
-                        <div class="flex justify-between items-start mb-3">
-                            <span class="text-xs font-bold uppercase tracking-wider px-2 py-1 rounded ${badgeColor}">
-                                ${evento.show || 'PLE / Especial'}
-                            </span>
-                            <span class="text-xs text-gray-500">${evento.fecha || 'Fecha por confirmar'}</span>
-                        </div>
-                        <h3 class="text-xl font-bold text-white mb-2">${evento.titulo || 'Show de WWE'}</h3>
-                        <p class="text-gray-400 text-sm mb-1">📍 ${evento.lugar || 'Lugar no especificado'}</p>
-                        ${evento.combates ? `<div class="mt-3 pt-3 border-t border-gray-800 text-xs text-gray-400"><strong>Cartelera:</strong> ${evento.combates}</div>` : ''}
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function filtrar(tipo) {
-            // Resetear estilos de todos los botones de filtro
-            document.querySelectorAll('#filtros button').forEach(btn => {
-                btn.classList.remove('bg-red-600');
-                btn.classList.add('bg-gray-800');
-            });
-
-            // Activar el botón seleccionado y filtrar datos
-            if (tipo === 'todos') {
-                document.getElementById('btn-todos')?.classList.replace('bg-gray-800', 'bg-red-600');
-                renderizarEventos(todosLosEventos);
-            } else if (tipo === 'ple') {
-                document.getElementById('btn-ple')?.classList.replace('bg-gray-800', 'bg-red-600');
-                const filtrados = todosLosEventos.filter(e => {
-                    const name = (e.show || '').toLowerCase();
-                    return !name.includes('raw') && !name.includes('smackdown');
-                });
-                renderizarEventos(filtrados);
-            } else {
-                document.getElementById(`btn-${tipo}`)?.classList.replace('bg-gray-800', 'bg-red-600');
-                const filtrados = todosLosEventos.filter(e => (e.show || '').toLowerCase().includes(tipo));
-                renderizarEventos(filtrados);
-            }
-        }
-
-        // Inicialización segura controlando los nulos (Evita el error de addEventListener)
-        document.addEventListener('DOMContentLoaded', () => {
-            cargarEventos();
-
-            document.getElementById('btn-todos')?.addEventListener('click', () => filtrar('todos'));
-            document.getElementById('btn-raw')?.addEventListener('click', () => filtrar('raw'));
-            document.getElementById('btn-smackdown')?.addEventListener('click', () => filtrar('smackdown'));
-            document.getElementById('btn-ple')?.addEventListener('click', () => filtrar('ple'));
-        });
-    </script>
-</body>
-</html>
+        function obtenerLogoY
