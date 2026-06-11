@@ -1,0 +1,20 @@
+[
+  {
+    "titulo": "Money in the Bank",
+    "fechaUTC": "2026-07-05T23:00:00.000Z",
+    "imagen": "https://images.unsplash.com/photo-1599058917212-d750089bc07e?w=400&auto=format&fit=crop&q=60&sig=0",
+    "combates": [
+      "Cody Rhodes vs. Randy Orton - WWE Championship",
+      "Damian Priest vs. Gunther - World Heavyweight Championship",
+      "Men's Money in the Bank Ladder Match"
+    ]
+  },
+  {
+    "titulo": "SummerSlam",
+    "fechaUTC": "2026-08-02T23:00:00.000Z",
+    "imagen": "https://images.unsplash.com/photo-1599058917212-d750089bc07e?w=400&auto=format&fit=crop&q=60&sig=1",
+    "combates": [
+      "Cartelera por confirmar en televisión"
+    ]
+  }
+]
