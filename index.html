@@ -37,11 +37,12 @@
     </div>
 
     <script>
+        // URLs alternativas estables usando CDN de logos limpios
         const LOGOS_MARCAS = {
-            raw: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/WWE_Raw_logo_%22New_Era%22.png/120px-WWE_Raw_logo_%22New_Era%22.png',
-            smackdown: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c4/WWE_SmackDown_logo_2024.png/120px-WWE_SmackDown_logo_2024.png',
-            nxt: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/WWE_NXT_logo_%282024%29.png/120px-WWE_NXT_logo_%282024%29.png',
-            ple: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/WWE_Logo.svg/120px-WWE_Logo.svg.png'
+            raw: 'https://www.wwe.com/f/styles/wwe_large/public/all/2024/01/RAW_logo--e0fb68e987f2e46f6d0f1966a3bcf447.png',
+            smackdown: 'https://www.wwe.com/f/styles/wwe_large/public/all/2024/09/SmackDown_Logo_2024--f77c38ea12035bc20c576550b06b29cd.png',
+            nxt: 'https://www.wwe.com/f/styles/wwe_large/public/all/2024/09/NXT_Logo_2024--3fd29cf6534ef06b9b2c34bc5e79ff73.png',
+            ple: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/03/WWE_Logo.svg/320px-WWE_Logo.svg.png' 
         };
 
         let todosLosEventos = [];
@@ -58,7 +59,7 @@
                 console.error("Error al cargar datos.json:", e);
             }
 
-            // INYECTOR DE PRUEBA: Si el JSON viene casi vacío, metemos eventos para ver que la interfaz funcione
+            // Inyector de eventos ficticios para simulación en Junio 2026
             if (todosLosEventos.length <= 2) {
                 todosLosEventos.push(
                     { "fecha": "2026-06-15", "show": "RAW", "titulo": "Monday Night RAW", "lugar": "Allstate Arena - Chicago, IL" },
@@ -131,7 +132,7 @@
                         const config = obtenerLogoYEstilo(ev.show);
                         return `
                             <div class="flex flex-col items-center justify-center p-1.5 rounded-lg border ${config.bg} text-center space-y-1 group relative cursor-help">
-                                <img src="${config.logo}" alt="Logo" class="h-5 md:h-6 object-contain filter drop-shadow">
+                                <img src="${config.logo}" alt="${ev.show}" class="h-6 md:h-7 object-contain filter drop-shadow max-w-full">
                                 <span class="text-[9px] font-bold tracking-tight block truncate max-w-full ${config.texto}">
                                     ${ev.titulo || ev.show}
                                 </span>
