@@ -18,7 +18,7 @@
 
     <div class="flex justify-between items-center bg-gray-900 p-4 rounded-xl mb-6 border border-gray-800">
         <button id="btn-prev" class="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-bold transition cursor-pointer">← Anterior</button>
-        <h2 id="mes-año-titulo" class="text-xl md:text-2xl font-black text-white uppercase tracking-wide">Mes Año</h2>
+        <h2 id="calendar-title" class="text-xl md:text-2xl font-black text-white uppercase tracking-wide">Cargando...</h2>
         <button id="btn-next" class="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-bold transition cursor-pointer">Siguiente →</button>
     </div>
 
@@ -37,7 +37,7 @@
     </div>
 
     <script>
-        // Diccionario de logos oficiales (URLs públicas y estables)
+        // URLs estables de los logos oficiales
         const LOGOS_MARCAS = {
             raw: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/WWE_Raw_logo_%22New_Era%22.png/120px-WWE_Raw_logo_%22New_Era%22.png',
             smackdown: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c4/WWE_SmackDown_logo_2024.png/120px-WWE_SmackDown_logo_2024.png',
@@ -46,19 +46,106 @@
         };
 
         let todosLosEventos = [];
-        let fechaActual = new Date(); // Mes en curso
+        let fechaActual = new Date();
 
         const nombresMeses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
 
         async function inicializar() {
             try {
                 const respuesta = await fetch('datos.json');
-                if (!respuesta.ok) throw new Error('Falta datos.json');
+                if (!respuesta.ok) throw new Error('No se pudo leer datos.json');
                 todosLosEventos = await respuesta.json();
             } catch (e) {
-                console.error("No se pudieron cargar los eventos en vivo:", e);
+                console.error("Aviso: datos.json vacio o no creado aun:", e);
             }
             dibujarCalendario();
         }
 
-        function obtenerLogoY
+        function obtenerLogoYEstilo(showName) {
+            const name = (showName || '').toLowerCase();
+            if (name.includes('raw')) return { logo: LOGOS_MARCAS.raw, bg: 'bg-red-950/40 border-red-600/50', texto: 'text-red-400' };
+            if (name.includes('smackdown')) return { logo: LOGOS_MARCAS.smackdown, bg: 'bg-blue-950/40 border-blue-600/50', texto: 'text-blue-400' };
+            if (name.includes('nxt')) return { logo: LOGOS_MARCAS.nxt, bg: 'bg-yellow-950/20 border-yellow-500/50', texto: 'text-yellow-500' };
+            return { logo: LOGOS_MARCAS.ple, bg: 'bg-purple-950/40 border-purple-600/50', texto: 'text-purple-400' };
+        }
+
+        function dibujarCalendario() {
+            const grid = document.getElementById('calendar-grid');
+            const titulo = document.getElementById('calendar-title');
+            if (!grid || !titulo) return;
+
+            grid.innerHTML = '';
+            const anio = fechaActual.getFullYear();
+            const mes = fechaActual.getMonth();
+
+            titulo.innerText = `${nombresMeses[mes]} ${anio}`;
+
+            const primerDiaMes = new Date(anio, mes, 1);
+            const totalDias = new Date(anio, mes + 1, 0).getDate();
+
+            let diaSemanaInicio = primerDiaMes.getDay() - 1;
+            if (diaSemanaInicio === -1) diaSemanaInicio = 6; 
+
+            // 1. Espacios en blanco del mes anterior
+            for (let i = 0; i < diaSemanaInicio; i++) {
+                grid.innerHTML += `<div class="bg-gray-950/40 p-2 border-gray-800/40"></div>`;
+            }
+
+            // 2. Dibujar los dias del mes actual
+            for (let dia = 1; dia <= totalDias; dia++) {
+                const eventosDelDia = todosLosEventos.filter(evento => {
+                    if (!evento.fecha) return false;
+                    const evDate = new Date(evento.fecha);
+                    return evDate.getFullYear() === anio && evDate.getMonth() === mes && evDate.getDate() === dia;
+                });
+
+                let htmlEventos = '';
+                if (eventosDelDia.length > 0) {
+                    htmlEventos = eventosDelDia.map(ev => {
+                        const config = obtenerLogoYEstilo(ev.show);
+                        return `
+                            <div class="flex flex-col items-center justify-center p-2 rounded-lg border ${config.bg} text-center space-y-1 group relative cursor-help">
+                                <img src="${config.logo}" alt="Logo" class="h-6 object-contain filter drop-shadow">
+                                <span class="text-[10px] font-bold tracking-tight block truncate max-w-full ${config.texto}">
+                                    ${ev.titulo || ev.show}
+                                </span>
+                                <div class="absolute bottom-full mb-2 hidden group-hover:block bg-gray-950 text-white text-xs p-3 rounded-lg border border-gray-700 shadow-xl z-50 w-48 text-left">
+                                    <p class="font-bold text-red-500">${ev.show || 'WWE'}</p>
+                                    <p class="font-semibold text-white my-0.5">${ev.titulo || 'Show'}</p>
+                                    <p class="text-gray-400 text-[11px]">📍 ${ev.lugar || 'Por confirmar'}</p>
+                                    ${ev.combates ? `<p class="text-gray-500 text-[10px] mt-1 border-t border-gray-800 pt-1"><b>Cartelera:</b> ${ev.combates}</p>` : ''}
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+
+                const hoy = new Date();
+                const esHoy = hoy.getFullYear() === anio && hoy.getMonth() === mes && hoy.getDate() === dia;
+                const estiloBordeHoy = esHoy ? 'bg-red-600/10 border-t-2 border-t-red-500 font-bold' : '';
+
+                grid.innerHTML += `
+                    <div class="p-2 min-h-[90px] md:min-h-[110px] flex flex-col justify-between items-stretch hover:bg-gray-800/20 transition ${estiloBordeHoy}">
+                        <span class="text-xs md:text-sm ${esHoy ? 'text-red-400 font-black' : 'text-gray-500'}">${dia}</span>
+                        <div class="space-y-1.5 mt-1 flex-1 flex flex-col justify-center">
+                            ${htmlEventos}
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        document.getElementById('btn-prev').addEventListener('click', () => {
+            fechaActual.setMonth(fechaActual.getMonth() - 1);
+            dibujarCalendario();
+        });
+
+        document.getElementById('btn-next').addEventListener('click', () => {
+            fechaActual.setMonth(fechaActual.getMonth() + 1);
+            dibujarCalendario();
+        });
+
+        document.addEventListener('DOMContentLoaded', inicializar);
+    </script>
+</body>
+</html>
